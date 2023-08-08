@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Added
+### Added
 
 - Added authority claimer service to support reader mode
+
+### Changed
+
+- Renamed `dispatcher` service to `eth-input-reader`
+
+### Removed
+
+- Removed claiming functionality from `eth-input-reader`
 
 ## [1.0.0] 2023-08-22
 

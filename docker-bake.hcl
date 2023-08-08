@@ -6,7 +6,7 @@ group "default" {
   targets = [
     "advance-runner",
     "cli",
-    "dispatcher",
+    "eth-input-reader",
     "graphql-server",
     "hardhat",
     "host-runner",
@@ -30,10 +30,10 @@ target "state-server" {
   context    = "."
 }
 
-target "dispatcher" {
+target "eth-input-reader" {
   inherits   = ["docker-metadata-action", "docker-platforms"]
   dockerfile = "offchain/Dockerfile"
-  target     = "dispatcher"
+  target     = "eth-input-reader"
   context    = "."
 }
 

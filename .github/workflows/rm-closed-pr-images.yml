@@ -16,7 +16,7 @@ jobs:
           - rollups-advance-runner
           - rollups-cli
           - rollups-deployments
-          - rollups-dispatcher
+          - rollups-eth-input-reader
           - rollups-graphql-server
           - rollups-hardhat
           - rollups-host-runner

@@ -1,7 +1,7 @@
 advance-runner [For every change inside the offchain/advance-runner service]
 host-runner [For every change inside the offchain/host-runner service]
 claimer [For every change inside the offchain/authority-claime service]
-dispatcher [For every change inside the offchain/dispatcher service]
+input-reader [For every change inside the offchain/eth-input-reader service]
 graphql-server [For every change inside the offchain/graphql-server service]
 indexer [For every change inside the offchain/indexer service]
 inspect-server [For every change inside the offchain/inspect-server service]

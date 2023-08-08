@@ -145,12 +145,12 @@ jobs:
           org-name: ${{ github.repository_owner }}
           token: ${{ secrets.GHCR_TOKEN }}
 
-  dispatcher:
+  eth-input-reader:
     needs: build_docker
     uses: ./.github/workflows/docker.yml
     with:
-      target: dispatcher
-      image-name: rollups-dispatcher
+      target: eth-input-reader
+      image-name: rollups-eth-input-reader
     secrets: inherit
 
   state_server:

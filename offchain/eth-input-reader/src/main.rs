@@ -12,6 +12,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .from_env_lossy();
     tracing_subscriber::fmt().with_env_filter(filter).init();
 
-    let config = dispatcher::config::Config::initialize()?;
-    dispatcher::run(config).await.map_err(|e| e.into())
+    let config = eth_input_reader::config::Config::initialize()?;
+    eth_input_reader::run(config).await.map_err(|e| e.into())
 }

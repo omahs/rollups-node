@@ -11,8 +11,8 @@ target "state-server" {
   tags = ["${DOCKER_ORGANIZATION}/rollups-state-server:${TAG}"]
 }
 
-target "dispatcher" {
-  tags = ["${DOCKER_ORGANIZATION}/rollups-dispatcher:${TAG}"]
+target "eth-input-reader" {
+  tags = ["${DOCKER_ORGANIZATION}/rollups-eth-input-reader:${TAG}"]
 }
 
 target "indexer" {

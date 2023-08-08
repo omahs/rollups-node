@@ -63,16 +63,16 @@ COPY --from=builder /usr/src/app/offchain/target/release/cartesi-rollups-indexer
 USER cartesi
 ENTRYPOINT ["/opt/cartesi/bin/cartesi-rollups-indexer"]
 
-FROM runtime AS dispatcher
+FROM runtime AS eth-input-reader
 RUN <<EOF
 apt-get update
 DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends ca-certificates
 rm -rf /var/lib/apt/lists/*
 EOF
-COPY --from=builder /usr/src/app/offchain/target/release/cartesi-rollups-dispatcher /opt/cartesi/bin/cartesi-rollups-dispatcher
+COPY --from=builder /usr/src/app/offchain/target/release/cartesi-rollups-eth-input-reader /opt/cartesi/bin/cartesi-rollups-eth-input-reader
 COPY onchain/rollups/export/abi /opt/cartesi/share/deployments/
 USER cartesi
-ENTRYPOINT ["/opt/cartesi/bin/cartesi-rollups-dispatcher"]
+ENTRYPOINT ["/opt/cartesi/bin/cartesi-rollups-eth-input-reader"]
 
 FROM runtime AS advance_runner
 RUN <<EOF
