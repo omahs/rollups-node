@@ -184,11 +184,9 @@ impl Broker {
         }
     }
 
-    /// Consume the next event in stream
-    /// This function blocks until a new event is available.
-    /// To consume the first event in the stream, last_consumed_id should be INITIAL_ID.
+    /// Deprecated, use `consume_blocking` instead
     #[tracing::instrument(level = "trace", skip_all)]
-    pub async fn consume_blocking<S: BrokerStream>(
+    pub async fn consume_blocking_deprecated<S: BrokerStream>(
         &mut self,
         stream: &S,
         last_consumed_id: &str,
@@ -223,9 +221,34 @@ impl Broker {
         event.try_into()
     }
 
+    /// Consume the next event in stream
+    ///
+    /// This function blocks until a new event is available,
+    /// and it retries timeouts instead of returning an error.
+    ///
+    /// To consume the first event in the stream, `last_consumed_id` should be `INITIAL_ID`.
+    #[tracing::instrument(level = "trace", skip_all)]
+    pub async fn consume_blocking<S: BrokerStream>(
+        &mut self,
+        stream: &S,
+        last_consumed_id: &str,
+    ) -> Result<Event<S::Payload>, BrokerError> {
+        loop {
+            let result = self
+                .consume_blocking_deprecated(stream, last_consumed_id)
+                .await;
+
+            if let Err(BrokerError::ConsumeTimeout) = result {
+                tracing::trace!("consume timed out, retrying");
+            } else {
+                return result;
+            }
+        }
+    }
+
     /// Consume the next event in stream without blocking
     /// This function returns None if there are no more remaining events.
-    /// To consume the first event in the stream, last_consumed_id should be INITIAL_ID.
+    /// To consume the first event in the stream, `last_consumed_id` should be `INITIAL_ID`.
     #[tracing::instrument(level = "trace", skip_all)]
     pub async fn consume_nonblocking<S: BrokerStream>(
         &mut self,

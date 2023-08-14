@@ -209,7 +209,7 @@ async fn test_it_consumes_events() {
     let mut last_id = INITIAL_ID.to_owned();
     for i in 0..N {
         let event = broker
-            .consume_blocking(&MockStream {}, &last_id)
+            .consume_blocking_deprecated(&MockStream {}, &last_id)
             .await
             .expect("failed to consume");
         assert_eq!(event.id, format!("1-{}", i));
@@ -237,7 +237,7 @@ async fn test_it_blocks_until_event_is_produced() {
     // In the main thread, wait for the expected event
     let mut broker = state.create_broker().await;
     let event = broker
-        .consume_blocking(&MockStream {}, "0")
+        .consume_blocking_deprecated(&MockStream {}, "0")
         .await
         .expect("failed to consume event");
     assert_eq!(event.id, "1-0");
@@ -293,7 +293,7 @@ async fn test_it_times_out_when_no_event_is_produced() {
     let state = TestState::setup(&docker).await;
     let mut broker = state.create_broker().await;
     let err = broker
-        .consume_blocking(&MockStream {}, "0")
+        .consume_blocking_deprecated(&MockStream {}, "0")
         .await
         .expect_err("consume event worked but it should have failed");
     assert!(matches!(err, BrokerError::ConsumeTimeout));

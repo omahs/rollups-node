@@ -481,15 +481,17 @@ name = "authority-claimer"
 version = "1.1.0"
 dependencies = [
  "async-trait",
+ "backoff",
  "clap",
  "eth-tx-manager",
- "ethers",
  "http-server",
  "rollups-events",
  "rusoto_core",
  "serde",
  "serde_json",
  "snafu",
+ "test-fixtures",
+ "testcontainers",
  "tokio",
  "tracing",
  "tracing-subscriber",

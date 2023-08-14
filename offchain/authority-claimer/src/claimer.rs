@@ -2,88 +2,80 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 use async_trait::async_trait;
+use rollups_events::RollupsClaim;
 use snafu::ResultExt;
+use std::fmt::Debug;
 use tracing::{info, trace};
 
-use crate::{
-    checker::DuplicateChecker, listener::BrokerListener,
-    sender::TransactionSender,
-};
+use crate::{checker::DuplicateChecker, sender::TransactionSender};
 
-/// The `AuthorityClaimer` starts an event loop that waits for claim messages
-/// from the broker, and then sends the claims to the blockchain. It checks to
-/// see if the claim is duplicated before sending.
-///
-/// It uses three injected traits, `BrokerListener`, `DuplicateChecker`, and
-/// `TransactionSender`, to, respectivelly, listen for messages, check for
-/// duplicated claims, and send claims to the blockchain.
+/// The `Claimer` sends claims to the blockchain. It checks
+/// whether the claim is duplicated before sending.
 #[async_trait]
-pub trait AuthorityClaimer {
-    async fn start<L, C, S>(
-        &self,
-        broker_listener: L,
-        duplicate_checker: C,
-        transaction_sender: S,
-    ) -> Result<(), AuthorityClaimerError<L, C, S>>
-    where
-        L: BrokerListener + Send + Sync,
-        C: DuplicateChecker + Send + Sync,
-        S: TransactionSender + Send,
-    {
-        trace!("Starting the authority claimer loop");
-        let mut transaction_sender = transaction_sender;
-        loop {
-            let rollups_claim = broker_listener
-                .listen()
-                .await
-                .context(BrokerListenerSnafu)?;
-            trace!("Got a claim from the broker: {:?}", rollups_claim);
+pub trait Claimer: Sized + Debug {
+    type Error: snafu::Error + 'static;
 
-            let is_duplicated_rollups_claim = duplicate_checker
-                .is_duplicated_rollups_claim(&rollups_claim)
-                .await
-                .context(DuplicateCheckerSnafu)?;
-            if is_duplicated_rollups_claim {
-                trace!("It was a duplicated claim");
-                continue;
-            }
+    async fn send_rollups_claim(
+        self,
+        rollups_claim: RollupsClaim,
+    ) -> Result<Self, Self::Error>;
+}
 
-            info!("Sending a new rollups claim");
-            transaction_sender = transaction_sender
-                .send_rollups_claim(rollups_claim)
-                .await
-                .context(TransactionSenderSnafu)?
+#[derive(Debug, snafu::Snafu)]
+pub enum ClaimerError<D: DuplicateChecker, T: TransactionSender> {
+    #[snafu(display("duplicated claim error"))]
+    DuplicatedClaimError { source: D::Error },
+
+    #[snafu(display("transaction sender error"))]
+    TransactionSenderError { source: T::Error },
+}
+
+/// The `AbstractClaimer` must be injected with a
+/// `DuplicateChecker` and a `TransactionSender`.
+#[derive(Debug)]
+pub struct AbstractClaimer<D: DuplicateChecker, T: TransactionSender> {
+    duplicate_checker: D,
+    transaction_sender: T,
+}
+
+impl<D: DuplicateChecker, T: TransactionSender> AbstractClaimer<D, T> {
+    pub fn new(duplicate_checker: D, transaction_sender: T) -> Self {
+        Self {
+            duplicate_checker,
+            transaction_sender,
         }
     }
 }
 
-#[derive(Debug, snafu::Snafu)]
-pub enum AuthorityClaimerError<
-    L: BrokerListener + 'static,
-    C: DuplicateChecker + 'static,
-    S: TransactionSender + 'static,
-> {
-    #[snafu(display("broker listener error"))]
-    BrokerListenerError { source: L::Error },
+#[async_trait]
+impl<D, T> Claimer for AbstractClaimer<D, T>
+where
+    D: DuplicateChecker + Send + Sync + 'static,
+    T: TransactionSender + Send + 'static,
+{
+    type Error = ClaimerError<D, T>;
 
-    #[snafu(display("duplicate checker error"))]
-    DuplicateCheckerError { source: C::Error },
+    async fn send_rollups_claim(
+        mut self,
+        rollups_claim: RollupsClaim,
+    ) -> Result<Self, Self::Error> {
+        let is_duplicated_rollups_claim = self
+            .duplicate_checker
+            .is_duplicated_rollups_claim(&rollups_claim)
+            .await
+            .context(DuplicatedClaimSnafu)?;
+        if is_duplicated_rollups_claim {
+            trace!("It was a duplicated claim");
+            return Ok(self);
+        }
 
-    #[snafu(display("transaction sender error"))]
-    TransactionSenderError { source: S::Error },
-}
+        info!("Sending a new rollups claim");
+        self.transaction_sender = self
+            .transaction_sender
+            .send_rollups_claim_transaction(rollups_claim)
+            .await
+            .context(TransactionSenderSnafu)?;
 
-// ------------------------------------------------------------------------------------------------
-// DefaultAuthorityClaimer
-// ------------------------------------------------------------------------------------------------
-
-#[derive(Default)]
-pub struct DefaultAuthorityClaimer;
-
-impl DefaultAuthorityClaimer {
-    pub fn new() -> Self {
-        Self
+        Ok(self)
     }
 }
-
-impl AuthorityClaimer for DefaultAuthorityClaimer {}

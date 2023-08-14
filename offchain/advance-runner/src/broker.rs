@@ -107,7 +107,7 @@ impl BrokerFacade {
         loop {
             let result = self
                 .client
-                .consume_blocking(&self.inputs_stream, last_id)
+                .consume_blocking_deprecated(&self.inputs_stream, last_id)
                 .await;
             if matches!(result, Err(BrokerError::ConsumeTimeout)) {
                 tracing::trace!("consume timed out, retrying");

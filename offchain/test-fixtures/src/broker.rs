@@ -225,7 +225,7 @@ impl BrokerFixture<'_> {
                 .client
                 .lock()
                 .await
-                .consume_blocking(&self.claims_stream, &last_id)
+                .consume_blocking_deprecated(&self.claims_stream, &last_id)
                 .await
                 .expect("failed to consume claim");
             claims.push(event.payload);
