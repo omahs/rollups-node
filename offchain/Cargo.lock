@@ -1642,9 +1642,10 @@ dependencies = [
  "backoff",
  "clap",
  "contracts",
- "eth-state-client-lib",
+ "eth-block-history",
+ "eth-state-fold",
  "eth-state-fold-types",
- "eth-tx-manager",
+ "ethers",
  "ethers-signers",
  "futures",
  "http-server",
@@ -1695,24 +1696,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "eth-state-client-lib"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78b7d6b6315771fab8783b4aefdd034e887c2e688ac0357dc1007b97b49e4296"
-dependencies = [
- "async-trait",
- "clap",
- "eth-state-fold-types",
- "eth-state-server-common",
- "serde",
- "serde_json",
- "snafu",
- "tokio",
- "tokio-stream",
- "tonic",
-]
-
-[[package]]
 name = "eth-state-fold"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1743,44 +1726,6 @@ dependencies = [
  "serde_json",
  "snafu",
  "toml 0.5.11",
-]
-
-[[package]]
-name = "eth-state-server-common"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4953e04ab2e41d45722a21e92d066f03111a8ab81ec765ae6b4873ee77040c43"
-dependencies = [
- "anyhow",
- "eth-state-fold-types",
- "prost",
- "serde",
- "serde_json",
- "snafu",
- "tonic",
- "tonic-build",
-]
-
-[[package]]
-name = "eth-state-server-lib"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "819fa6c22d25963976ebf2ae1db3c1c5489bb951b847ee21d85481097ead2190"
-dependencies = [
- "clap",
- "eth-block-history",
- "eth-state-fold",
- "eth-state-fold-types",
- "eth-state-server-common",
- "futures",
- "serde",
- "serde_json",
- "snafu",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-health",
- "tracing",
 ]
 
 [[package]]
@@ -4877,24 +4822,6 @@ checksum = "67cf02bbac7a337dc36e4f5a693db6c21e7863f45070f7064577eb4367a3212b"
 dependencies = [
  "base64ct",
  "der",
-]
-
-[[package]]
-name = "state-server"
-version = "1.1.0"
-dependencies = [
- "eth-block-history",
- "eth-state-fold",
- "eth-state-fold-types",
- "eth-state-server-lib",
- "serde",
- "snafu",
- "tokio",
- "tonic",
- "tracing",
- "tracing-subscriber",
- "types",
- "url",
 ]
 
 [[package]]

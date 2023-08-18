@@ -11,8 +11,7 @@ group "default" {
     "hardhat",
     "host-runner",
     "inspect-server",
-    "indexer",
-    "state-server"
+    "indexer"
   ]
 }
 
@@ -20,13 +19,6 @@ target "deps" {
   inherits   = ["docker-metadata-action", "docker-platforms"]
   dockerfile = "offchain/Dockerfile"
   target     = "builder"
-  context    = "."
-}
-
-target "state-server" {
-  inherits   = ["docker-metadata-action", "docker-platforms"]
-  dockerfile = "offchain/Dockerfile"
-  target     = "state_server"
   context    = "."
 }
 

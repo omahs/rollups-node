@@ -7,10 +7,6 @@ variable "DOCKER_ORGANIZATION" {
   default = "cartesi"
 }
 
-target "state-server" {
-  tags = ["${DOCKER_ORGANIZATION}/rollups-state-server:${TAG}"]
-}
-
 target "eth-input-reader" {
   tags = ["${DOCKER_ORGANIZATION}/rollups-eth-input-reader:${TAG}"]
 }

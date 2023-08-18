@@ -1,22 +1,27 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
-use eth_state_client_lib::StateServer;
+use eth_state_fold::{Foldable, StateFoldEnvironment};
 use eth_state_fold_types::{Block, BlockStreamItem};
 use rollups_events::{Address, DAppMetadata};
+use std::sync::{Arc, Mutex};
 use tokio_stream::StreamExt;
 use tracing::{error, info, instrument, trace, warn};
 use types::foldables::authority::rollups::{RollupsInitialState, RollupsState};
+use types::UserData;
 
 use crate::{
     config::EthInputReaderConfig,
-    error::{BrokerSnafu, EthInputReaderError, StateServerSnafu},
+    error::{BrokerSnafu, EthInputReaderError},
     machine::{
         driver::MachineDriver, rollups_broker::BrokerFacade, BrokerReceive,
         BrokerSend, Context,
     },
     metrics::EthInputReaderMetrics,
-    setup::{create_block_subscription, create_context, create_state_server},
+    setup::{
+        create_block_subscriber, create_context, create_env, create_provider,
+        create_subscription, InputProvider,
+    },
 };
 
 use snafu::{whatever, ResultExt};
@@ -29,17 +34,21 @@ pub async fn start(
     info!("Setting up eth-input-reader with config: {:?}", config);
 
     let dapp_metadata = DAppMetadata {
-        chain_id: config.tx_config.chain_id,
+        chain_id: config.chain_id,
         dapp_address: Address::new(config.dapp_deployment.dapp_address.into()),
     };
 
-    trace!("Creating state-server connection");
-    let state_server = create_state_server(&config.sc_config).await?;
+    trace!("Creating provider");
+    let provider = create_provider(&config).await?;
+
+    trace!("Creating block-subscriber");
+    let block_subscriber =
+        create_block_subscriber(&config, Arc::clone(&provider)).await?;
 
     trace!("Starting block subscription with confirmations");
-    let mut block_subscription = create_block_subscription(
-        &state_server,
-        config.sc_config.default_confirmations,
+    let mut block_subscription = create_subscription(
+        Arc::clone(&block_subscriber),
+        config.subscription_depth,
     )
     .await?;
 
@@ -49,10 +58,23 @@ pub async fn start(
             .await
             .context(BrokerSnafu)?;
 
+    trace!("Creating env");
+    let env = create_env(
+        &config,
+        Arc::clone(&provider),
+        Arc::clone(&block_subscriber.block_archive),
+    )
+    .await?;
+
     trace!("Creating context");
-    let mut context =
-        create_context(&config, &state_server, &broker, dapp_metadata, metrics)
-            .await?;
+    let mut context = create_context(
+        &config,
+        Arc::clone(&block_subscriber),
+        &broker,
+        dapp_metadata,
+        metrics,
+    )
+    .await?;
 
     trace!("Creating machine driver and blockchain driver");
     let mut machine_driver =
@@ -75,8 +97,8 @@ pub async fn start(
                     b.parent_hash
                 );
                 process_block(
+                    &Arc::clone(&env),
                     &b,
-                    &state_server,
                     &initial_state,
                     &mut context,
                     &mut machine_driver,
@@ -114,24 +136,21 @@ pub async fn start(
 #[instrument(level = "trace", skip_all)]
 #[allow(clippy::too_many_arguments)]
 async fn process_block(
+    env: &Arc<StateFoldEnvironment<InputProvider, Mutex<UserData>>>,
     block: &Block,
-
-    state_server: &impl StateServer<
-        InitialState = RollupsInitialState,
-        State = RollupsState,
-    >,
     initial_state: &RollupsInitialState,
-
     context: &mut Context,
     machine_driver: &mut MachineDriver,
-
     broker: &(impl BrokerSend + BrokerReceive),
 ) -> Result<(), EthInputReaderError> {
     trace!("Querying rollup state");
-    let state = state_server
-        .query_state(initial_state, block.hash)
-        .await
-        .context(StateServerSnafu)?;
+    let state = RollupsState::get_state_for_block(
+        &Arc::new(initial_state.to_owned()),
+        block,
+        env,
+    )
+    .await
+    .expect("should get state");
 
     // Drive machine
     trace!("Reacting to state with `machine_driver`");

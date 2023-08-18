@@ -18,9 +18,10 @@ async-trait.workspace = true
 axum.workspace = true
 backoff = { workspace = true, features = ["tokio"] }
 clap = { workspace = true, features = ["derive", "env"] }
-eth-state-client-lib.workspace = true
-eth-state-fold-types = { workspace = true, features = ["ethers"] }
-eth-tx-manager.workspace = true
+eth-block-history.workspace = true
+eth-state-fold.workspace = true
+eth-state-fold-types.workspace = true
+ethers.workspace = true
 ethers-signers = { workspace = true, features = ["aws"] }
 futures.workspace = true
 hyper.workspace = true

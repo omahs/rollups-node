@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 use axum::http::uri::InvalidUri;
-use eth_state_client_lib::error::StateServerError;
+use ethers::providers::{Http, Provider, RetryClient};
 use snafu::Snafu;
 use std::net::AddrParseError;
 use tonic::transport::Error as TonicError;
+use url::ParseError;
 
 use crate::machine;
 
@@ -29,8 +30,14 @@ pub enum EthInputReaderError {
     #[snafu(display("connection error"))]
     ConnectError { source: TonicError },
 
-    #[snafu(display("state server error"))]
-    StateServerError { source: StateServerError },
+    #[snafu(display("parser error"))]
+    ParseError { source: ParseError },
+
+    #[snafu(display("parser error"))]
+    BlockArchiveError {
+        source:
+            eth_block_history::BlockArchiveError<Provider<RetryClient<Http>>>,
+    },
 
     #[snafu(whatever, display("{message}"))]
     Whatever {

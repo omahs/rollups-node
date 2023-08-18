@@ -43,16 +43,6 @@ WORKDIR /var/opt/cartesi
 ENV PATH="/opt/cartesi/bin:${PATH}"
 
 ## runtimes
-FROM runtime AS state_server
-RUN <<EOF
-apt-get update
-DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends ca-certificates
-rm -rf /var/lib/apt/lists/*
-EOF
-COPY --from=builder /usr/src/app/offchain/target/release/cartesi-rollups-state-server /opt/cartesi/bin/cartesi-rollups-state-server
-USER cartesi
-ENTRYPOINT ["/opt/cartesi/bin/cartesi-rollups-state-server"]
-
 FROM runtime AS indexer
 RUN <<EOF
 apt-get update
