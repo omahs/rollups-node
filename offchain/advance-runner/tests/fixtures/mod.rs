@@ -117,7 +117,7 @@ impl AdvanceRunnerFixture {
     /// Abort the current advance runner, wait it to finish and start another one
     #[tracing::instrument(level = "trace", skip_all)]
     pub async fn restart(&self) {
-        tracing::trace!("restartin advance runner");
+        tracing::trace!("restarting advance runner");
         let handler = self.handler.replace(None).expect("handler not found");
         handler.abort();
         handler

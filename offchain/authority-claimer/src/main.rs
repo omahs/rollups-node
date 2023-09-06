@@ -7,7 +7,7 @@ use tracing_subscriber::filter::{EnvFilter, LevelFilter};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // Settin up the logging environment.
+    // Setting up the logging environment.
     let env_filter = EnvFilter::builder()
         .with_default_directive(LevelFilter::INFO.into())
         .from_env_lossy();

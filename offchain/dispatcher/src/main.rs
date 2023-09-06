@@ -3,7 +3,7 @@
 
 use tracing_subscriber::filter::{EnvFilter, LevelFilter};
 
-// NOTE: doesn't support History upgradability.
+// NOTE: doesn't support History upgradeability.
 // NOTE: doesn't support changing epoch_duration in the middle of things.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
