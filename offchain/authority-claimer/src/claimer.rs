@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use rollups_events::RollupsClaim;
 use snafu::ResultExt;
 use std::fmt::Debug;
-use tracing::{info, trace};
+use tracing::info;
 
 use crate::{checker::DuplicateChecker, sender::TransactionSender};
 
@@ -65,7 +65,7 @@ where
             .await
             .context(DuplicatedClaimSnafu)?;
         if is_duplicated_rollups_claim {
-            trace!("It was a duplicated claim");
+            info!("Duplicate claim will not be sent");
             return Ok(self);
         }
 
