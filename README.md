@@ -1,6 +1,6 @@
-# Cartesi Node Reference Implementation
+# Cartesi Rollups Node Reference Implementation
 
-The [Cartesi Node](https://docs.cartesi.io/cartesi-rollups/main-concepts/#cartesi-nodes) is the part of the [Cartesi Rollups Framework](https://docs.cartesi.io/cartesi-rollups/overview/) responsible for handling the communication between the on-chain smart contracts an the [Cartesi Machine](https://docs.cartesi.io/machine/intro/).
+The [Cartesi Rollups Node](https://docs.cartesi.io/cartesi-rollups/main-concepts/#cartesi-nodes), or simply Node, is the part of the Cartesi Rollups Framework responsible for handling the communication between the on-chain smart contracts an the [Cartesi Machine](https://docs.cartesi.io/machine/intro/).
 
 The Cartesi Rollups machine and smart contracts live in fundamentally different environments.
 This creates the need for the node that manages and controls the communication between the blockchain and the machine.
@@ -18,7 +18,7 @@ Validators, on the other hand, have more responsibility: they not only watch the
 
 ### Cloning submodules
 
-Before building and running any of the inner projects, you should download the submodules with:
+Before building and running any of the inner projects, all git submodules must be updated as follows:
 
 ```shell
 git submodule update --init --recursive
@@ -34,7 +34,7 @@ docker buildx bake --load
 
 ### Rust
 
-All projects comprising the Cartesi Node require Rust to be executed.
+All projects comprising the Node require Rust to be executed.
 To install it, follow the [instructions](https://www.rust-lang.org/tools/install) from the Rust website.
 
 ### Dependencies
@@ -50,19 +50,19 @@ The Cartesi Node depends on the following components:
 
 ### Running
 
-To run any of the inner projects, execute the command:
+To run any of the inner projects, go to their respective directories and execute the command:
 
 ```shell
 cargo run
 ```
 
-Some of the inner projects may have additional run instructions.
+Some of them may have additional run instructions.
 Refer to their own documentation for more details.
 
 ## Configuration
 
-It is possible to configure the behavior of any of the projects by passing CLI arguments and using environment variables.
-Execute the following command to check the available options for each project:
+The behavior of any of the projects may be configured by passing CLI arguments and using environment variables.
+Execute the following command to check the available options for each of them:
 
 ```shell
 cargo run -- -h
@@ -83,34 +83,34 @@ cargo test
 
 ## Architecture Overview
 
-The Cartesi Node is an event-based solution that may be depicted as follows:
+The Node is an event-based solution that may be depicted as follows:
 
 ![Node architecture diagram](./docs/node-architecture.drawio.svg)
 
 The **Broker** is a Redis-based message broker that mediates the transferring of *Inputs*, *Outputs* and *Claims* between the Cartesi Node components.
 For details specific to the Broker and the available event streams, refer to the [Rollups Events project](./offchain/rollups-events/README.md).
 
-The [**State-fold Server**](./offchain/state-server/README.md) is the component responsible for tracking blockchain state changes and deriving *Inputs* from them to be processed.
+The [**State-fold Server**](./offchain/state-server/README.md) is responsible for tracking blockchain state changes and deriving *Inputs* from them to be processed.
 
-The [**Dispatcher**](./offchain/dispatcher/README.md) is the component that messages *Inputs* via the **Broker** to be processed elsewhere and submits *Claims* to the blockchain.
+The [**Dispatcher**](./offchain/dispatcher/README.md) messages *Inputs* via the **Broker** to be processed elsewhere and submits *Claims* to the blockchain.
 
-The [**Advance Runner**](./offchain/advance-runner/README.md) is the one responsible for relaying *Inputs* to the **Server Manager** to be processed by the underlying DApp running in the embedded **Cartesi Machine**.
+The [**Advance Runner**](./offchain/advance-runner/README.md) realys *Inputs* to the **Server Manager** to be processed by the underlying DApp running in the embedded **Cartesi Machine**.
 The **Advance Runner** obtains the resulting **Outputs** and **Claims** from the **Server Manager** and adds them to the **Broker**.
 
 The [**Indexer**](./offchain/indexer/README.md) consumes all *Inputs* and *Outputs* transferred by the **Broker** and store them in a **PostgreSQL** database for later querying via a **GraphQL Server** instance.
 
-The [**Inspect Server**](./offchain/inspect-server/README.md) is responsible for the processing of *Inspect* requests via HTTP.
+The [**Inspect Server**](./offchain/inspect-server/README.md) processes *Inspect* requests received via HTTP.
 
 ## Workflows
 
-The Cartesi Node may act as a *User* (aka *Reader*) or *Validator* Node, hence performing different roles, which may be represented by different workflows.
+The Node may act as a *User* (aka *Reader*) or *Validator* Node, hence performing different roles, which may be represented by different workflows.
 
 ### Reader Flow
 
-In the Reader Flow, any *Input* read from the blockchain by the **State-fold Server** is received by the **Dispatcher** and relayed to the **Broker** through an input-specific stream.
-The *Input* is eventually consumed by the **Advance Runner** and used to advance the state of the **Server Manager**, thus generating an *Advance* request to be processed by the underlying DApp.
+In the Reader Flow, *Input*s read from the blockchain by the **State-fold Server** are received by the **Dispatcher** and relayed to the **Broker** through an input-specific stream.
+They are eventually consumed by the **Advance Runner** and used to advance the state of the **Server Manager**, thus generating corresponding *Advance* requests to be processed by the underlying DApp.
 
-After finishing the processing, the DApp may generate a number of *Outputs*, which are eventually retrieved by the **Advance Runner** and fed back into the **Broker** through an output-specific stream.
+After finishing processing each *Advance* request, the DApp may generate a number of *Outputs*, which are eventually retrieved by the **Advance Runner** and fed back into the **Broker** through an output-specific stream.
 
 *Inputs* and *Outputs* are consumed from their respective streams by the **Indexer** and stored in a **PostgreSQL** database and may be queried by the DApp **Frontend** via a **GraphQL Server** instance.
 
@@ -123,11 +123,11 @@ It complements the Reader Flow by generating *Claims* at the end of *Epochs*, wh
 
 Every *Inspect* request sent by the **Frontend** via the Rollups HTTP API is captured by the **Inspect Server** and forwarded to the **Server Manager**, which queries the state of the underlying DApp via *Inspect* requests.
 
-Every request results in an *Inspect Response* that is returned to the **Inspect Server**, which sends it back to the **Frontend**.
+Every request results in an *Inspect* response that is returned to the **Inspect Server**, which sends it back to the **Frontend**.
 
 ## Host mode
 
-The Cartesi Node may operate in a so-called *Host mode* when deployed locally for development purposes.
+The Node may operate in a so-called *Host mode* when deployed locally for development purposes.
 
 In this case, the overall topology is very similar to the one presented in the [Architecture Overview](#architecture-overview) as depicted below.
 
