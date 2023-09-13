@@ -1,12 +1,14 @@
 // (c) Cartesi and individual authors (see AUTHORS)
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
+pub mod auth;
 pub mod checker;
 pub mod claimer;
 pub mod config;
 pub mod listener;
 pub mod metrics;
 pub mod sender;
+pub mod signer;
 
 #[cfg(test)]
 mod mock;
@@ -35,7 +37,7 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let claimer_handle = {
         let config = config.authority_claimer_config;
 
-        let dapp_address = config.dapp_address;
+        let dapp_address = config.dapp_address.clone();
         let dapp_metadata = DAppMetadata {
             chain_id: config.tx_manager_config.chain_id,
             dapp_address,
@@ -48,9 +50,11 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error>> {
         // Creating the transaction sender.
         trace!("Creating the transaction sender");
         let transaction_sender = DefaultTransactionSender::new(
+            config.clone(),
             dapp_metadata.clone(),
             metrics.clone(),
-        )?;
+        )
+        .await?;
 
         // Creating the broker listener.
         trace!("Creating the broker listener");
@@ -60,8 +64,11 @@ pub async fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
         // Creating the claimer.
         trace!("Creating the claimer");
-        let claimer =
-            AbstractClaimer::new(duplicate_checker, transaction_sender);
+        let claimer = AbstractClaimer::new(
+            config.dapp_address,
+            duplicate_checker,
+            transaction_sender,
+        );
 
         // Returning the claimer event loop.
         broker_listener.start(claimer)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 (see LICENSE)
 
 use async_trait::async_trait;
-use rollups_events::RollupsClaim;
+use rollups_events::{Address, RollupsClaim};
 use snafu::ResultExt;
 use std::fmt::Debug;
 use tracing::info;
@@ -34,13 +34,19 @@ pub enum ClaimerError<D: DuplicateChecker, T: TransactionSender> {
 /// `DuplicateChecker` and a `TransactionSender`.
 #[derive(Debug)]
 pub struct AbstractClaimer<D: DuplicateChecker, T: TransactionSender> {
+    dapp_address: Address,
     duplicate_checker: D,
     transaction_sender: T,
 }
 
 impl<D: DuplicateChecker, T: TransactionSender> AbstractClaimer<D, T> {
-    pub fn new(duplicate_checker: D, transaction_sender: T) -> Self {
+    pub fn new(
+        dapp_address: Address,
+        duplicate_checker: D,
+        transaction_sender: T,
+    ) -> Self {
         Self {
+            dapp_address,
             duplicate_checker,
             transaction_sender,
         }
@@ -72,7 +78,10 @@ where
         info!("Sending a new rollups claim");
         self.transaction_sender = self
             .transaction_sender
-            .send_rollups_claim_transaction(rollups_claim)
+            .send_rollups_claim_transaction(
+                self.dapp_address.clone(),
+                rollups_claim,
+            )
             .await
             .context(TransactionSenderSnafu)?;
 
