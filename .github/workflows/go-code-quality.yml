@@ -1,0 +1,34 @@
+name: Assess Go code quality
+
+on:
+  push:
+    paths:
+      - ".github/workflows/go-code-quality.yml"
+      - "cmd/**"
+      - "internal/**"
+
+jobs:
+  assess-go-code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+
+      - name: Check code format
+        run: |
+          output=$(gofmt -s -l .)
+          if [ -n "$output" ]; then 
+            echo "$output"
+            exit 1; 
+          fi
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54.2
