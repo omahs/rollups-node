@@ -4,11 +4,11 @@
 package main
 
 import (
-	"os"
+	"github.com/cartesi/rollups-node/internal/pkg/logger"
 )
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		os.Exit(1)
+		logger.Error.Fatal(err)
 	}
 }
